@@ -1,41 +1,26 @@
-# AutoStock
+# AutoStock — Inventario automotriz
 
-**Desarrollo de Aplicaciones Móviles (DSY1105)**  
-**Integrantes:** Brayan Pino y Gabriel Millán
+Estamos desarrollando AutoStock para apoyar el registro de productos, las entradas y salidas de stock y las solicitudes de reposición de un taller mecánico. El proyecto utiliza información ficticia.
 
-## Nuestro proyecto
+En esta versión conservamos la aplicación Android con lectura QR, formularios, movimientos e inventario local con Room. También incorporamos un módulo separado para consultar y administrar productos a través de un backend Spring Boot. La sección «Servidor» se abre con el icono de nube en el inicio de la aplicación y permite demostrar solicitudes REST y operaciones CRUD.
 
-Estamos desarrollando **AutoStock**, una aplicación Android para apoyar la gestión del inventario de un taller mecánico. Tomamos como referencia un taller pequeño de Puente Alto, donde una misma persona debe revisar repuestos, registrar entradas y salidas, y organizar las compras cuando faltan productos.
+La API externa se utiliza para consultar registros ficticios de proveedores de demostración. Para esta actividad utilizamos JSONPlaceholder, cuyos usuarios se muestran como contactos ficticios; no representan proveedores reales.
 
-Buscamos que el inventario sea fácil de consultar desde el teléfono, sin depender de anotaciones ni de recordar dónde quedó cada repuesto. Este proyecto es un prototipo académico y trabaja con información ficticia.
+## Tecnologías
 
-## ¿Qué estamos construyendo?
+Kotlin, Jetpack Compose, Material 3, MVVM, Room, CameraX, ML Kit, Retrofit y Spring Boot con JPA y base de datos H2 de archivo.
 
-La aplicación reúne un catálogo de productos con sus cantidades, categorías y ubicaciones, además del registro de movimientos como ingresos, ventas y consumos en servicios mecánicos. También contempla alertas cuando las existencias están bajas y una propuesta de reposición agrupada por proveedor.
+## Módulos
 
-Sumamos la lectura de códigos QR para agilizar el ingreso de productos. La idea es que, al escanear un QR con datos compatibles, podamos revisar la información en un formulario antes de guardarla. Así evitamos crear registros sin que el usuario los confirme.
+- **AutoStock-Android:** aplicación móvil, inventario local, escaneo QR, navegación, módulo remoto y consulta a API externa.
+- **AutoStock-Backend:** API REST propia con productos, movimientos y reposición, persistidos en H2.
 
-## Tecnologías que utilizamos
+## Endpoints
 
-- **Kotlin y Android Studio** para el desarrollo de la aplicación.
-- **Jetpack Compose y Material 3** para la interfaz.
-- **MVVM** para separar las pantallas de la lógica de la aplicación.
-- **Room** para almacenar productos y movimientos de manera local.
-- **CameraX y ML Kit** para la lectura de códigos QR.
-- **Intents de Android** para preparar un correo de reposición desde una aplicación de correo instalada.
+`GET /api/productos`, `GET /api/productos/{id}`, `POST /api/productos`, `PUT /api/productos/{id}`, `DELETE /api/productos/{id}`, `GET /api/movimientos`, `POST /api/movimientos`, `GET /api/reposicion`.
 
-## Avance del proyecto
+La API externa consultada es `GET https://jsonplaceholder.typicode.com/users`.
 
-En esta versión incorporamos código para el acceso de demostración, la consulta y administración de productos, los movimientos de inventario, las alertas de reposición y el lector QR. También añadimos validaciones para los formularios y controles destinados a evitar cantidades negativas o códigos de producto duplicados.
+## Estado del avance
 
-**Estado actual:** el código todavía requiere sincronización, compilación y pruebas en Android Studio y en un dispositivo o emulador. En particular, debemos comprobar los permisos de cámara, la lectura del QR y el guardado de productos antes de dar estas funciones por terminadas.
-
-Para esta etapa, los proveedores y las ubicaciones se representan dentro de los datos de cada producto. Más adelante podremos ampliar esos módulos según las instrucciones de la Evaluación Final Transversal.
-
-## Datos de prueba
-
-Usamos un usuario y PIN ficticios, además de productos y proveedores de ejemplo. La app no está pensada para manejar datos personales ni operar en un taller real en su estado actual.
-
-## Próximos avances
-
-Queremos seguir mejorando la experiencia de uso, probar los distintos recorridos de la aplicación y completar las funcionalidades que se soliciten en las siguientes evaluaciones. Mantenemos el proyecto como una base que podremos ampliar sin empezar desde cero.
+El inventario local y el módulo de servidor se mantienen separados en esta versión, por lo que todavía no existe sincronización automática entre Room y Spring Boot. Se incorporaron pruebas unitarias de validación y reglas de movimientos, pero la cobertura del 80 % debe medirse antes de afirmarla. La compilación, el APK firmado y las pruebas integrales quedan sujetos a la verificación en Android Studio y en el entorno de backend.

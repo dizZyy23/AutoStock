@@ -41,6 +41,7 @@ import com.example.autostock.viewmodel.InventarioViewModel
 import com.example.autostock.viewmodel.ValidadorProducto
 import com.example.autostock.qr.QrScannerScreen
 import com.example.autostock.qr.QrProductParser
+import com.example.autostock.remote.ServidorScreen
 import com.example.autostock.qr.QrProductData
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -135,6 +136,7 @@ fun AutoStockApp(vm: InventarioViewModel = viewModel()) {
             TopAppBar(title = { Text(if (ruta == "Inicio") "AutoStock" else ruta, fontWeight = FontWeight.Bold) },
                 navigationIcon = { if (ruta != "Inicio") IconButton(onClick = { ruta = "Inicio"; seleccionado = null }) { Icon(Icons.Default.ArrowBack, "Volver") } },
                 actions = {
+                    if (ruta == "Inicio") IconButton(onClick = { ruta = "Servidor" }) { Icon(Icons.Default.Cloud, "Abrir servidor REST") }
                     if (ruta == "Productos") IconButton(onClick = { qrError = null; ruta = "Escanear QR" }) { Icon(Icons.Default.QrCodeScanner, "Agregar producto por QR") }
                     if (ruta == "Inicio") IconButton(onClick = { inicioSesion = false; clave = "" }) { Icon(Icons.Default.Logout, "Cerrar sesión") }
                 })
@@ -153,6 +155,7 @@ fun AutoStockApp(vm: InventarioViewModel = viewModel()) {
         Box(Modifier.padding(padding).fillMaxSize()) {
             when (ruta) {
                 "Inicio" -> InicioScreen(productos, movimientos.size, ir = { ruta = it })
+                "Servidor" -> ServidorScreen()
                 "Productos" -> ProductosScreen(productos, buscando, { buscando = it }, onEdit = { seleccionado = it; ruta = "Formulario" }, onDelete = { confirmEliminar = it }, onMovimiento = { seleccionado = it; ruta = "Registrar movimiento" }, codigoEscaneado = codigoEscaneado)
                 "Formulario" -> FormularioScreen(seleccionado, qrData, onGuardar = { vm.guardar(it) { ruta = "Productos"; seleccionado = null; qrData = null } }, onCancelar = { ruta = "Productos"; qrData = null })
                 "Escanear QR" -> QrScannerScreen(
