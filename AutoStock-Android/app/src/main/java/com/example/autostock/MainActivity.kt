@@ -4,6 +4,7 @@ import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
+import android.app.Application
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -65,7 +66,11 @@ class MainActivity : ComponentActivity() {
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AutoStockApp(vm: InventarioViewModel = viewModel()) {
+fun AutoStockApp(
+    vm: InventarioViewModel = viewModel(
+        factory = InventarioViewModel.factory(LocalContext.current.applicationContext as Application)
+    )
+) {
     var inicioSesion by rememberSaveable { mutableStateOf(false) }
     var usuario by rememberSaveable { mutableStateOf("") }
     var clave by rememberSaveable { mutableStateOf("") }
