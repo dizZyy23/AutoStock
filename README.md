@@ -1,47 +1,41 @@
-# AutoStock — DSY1105
+# AutoStock
 
-Aplicación académica de inventario para un taller automotriz ficticio de Puente Alto, desarrollada en Kotlin, Jetpack Compose, Material 3, MVVM y Room.
+**Desarrollo de Aplicaciones Móviles (DSY1105)**  
+**Integrantes:** Brayan Pino y Gabriel Millán
 
-## Abrir en Android Studio
-1. Descomprime el ZIP.
-2. Abre Android Studio > **Open** y selecciona la carpeta `AutoStock`.
-3. Instala Android SDK 36 si Android Studio lo solicita. Recomendado JDK 17.
-4. Deja completar **Gradle Sync**. Se necesita conexión a internet la primera vez para descargar dependencias.
-5. Ejecuta en un emulador Android 8.0+ o teléfono Android.
+## Nuestro proyecto
 
-> IMPORTANTE: Este paquete NO incluye el binario oficial `gradle-wrapper.jar` ni los scripts `gradlew`, porque no fue posible obtenerlos desde el entorno de generación. Si tu Android Studio exige un Gradle Wrapper, usa un Gradle instalado para ejecutar `gradle wrapper --gradle-version 8.13`, o copia los archivos oficiales del wrapper de un proyecto Android recién creado con la misma versión de Gradle. No copies `local.properties` de otro equipo.
+Estamos desarrollando **AutoStock**, una aplicación Android para apoyar la gestión del inventario de un taller mecánico. Tomamos como referencia un taller pequeño de Puente Alto, donde una misma persona debe revisar repuestos, registrar entradas y salidas, y organizar las compras cuando faltan productos.
 
-## Cuenta de demostración
-- Usuario: `admin`
-- PIN: `1234`
+Buscamos que el inventario sea fácil de consultar desde el teléfono, sin depender de anotaciones ni de recordar dónde quedó cada repuesto. Este proyecto es un prototipo académico y trabaja con información ficticia.
 
-Esta autenticación es **solo de demostración**, no es adecuada para una aplicación real. No guardes datos personales reales.
+## ¿Qué estamos construyendo?
 
-## Funcionalidades implementadas en el código
-- Panel de resumen con total de productos, alertas y movimientos.
-- Catálogo de productos, búsqueda y filtro por categoría.
-- Formulario con validaciones fuera de la vista y mensajes por campo.
-- Alta, edición y eliminación confirmada de productos.
-- Registro de ingresos, ventas, consumos, ajustes y devoluciones.
-- Prevención de stock negativo y movimientos en transacciones de Room.
-- Historial de movimientos con existencias anterior y resultante.
-- Reposición por proveedor y cálculo `máximo(0, objetivo - stock)`.
-- Apertura de cliente de correo con borrador y destinatario ficticio.
-- Escáner de QR/códigos con ZXing (necesita dispositivo/cámara compatible).
-- Animación de cambios en tarjetas y mensajes de errores.
-- Base Room local con productos de demostración solo al primer inicio.
+La aplicación reúne un catálogo de productos con sus cantidades, categorías y ubicaciones, además del registro de movimientos como ingresos, ventas y consumos en servicios mecánicos. También contempla alertas cuando las existencias están bajas y una propuesta de reposición agrupada por proveedor.
 
-## Limitaciones y tareas pendientes antes de entrega
-- **NO fue compilado ni probado en Android Studio dentro de este entorno**. Es imprescindible hacer Gradle Sync, compilar, ejecutar y corregir cualquier incompatibilidad según tu instalación.
-- Inicio de sesión ficticio sin almacenamiento seguro, no usar en producción.
-- Proveedores y ubicaciones están representados como campos del producto; sus formularios separados pueden añadirse para la EFT.
-- El escáner requiere comprobar permisos de cámara y funcionamiento real en el dispositivo.
-- El correo requiere una app de correo instalada; no envía mensajes automáticamente.
-- Falta crear repositorio GitHub con commits genuinos de ambos estudiantes y planificación real en Trello.
-- Revisar con el docente qué funciones del caso completo se exigirán en la EFT.
+Sumamos la lectura de códigos QR para agilizar el ingreso de productos. La idea es que, al escanear un QR con datos compatibles, podamos revisar la información en un formulario antes de guardarla. Así evitamos crear registros sin que el usuario los confirme.
 
-## Reparto de trabajo sugerido (pareja)
-Integrante A: UI, navegación y formularios. Integrante B: Room, movimientos y reposición. Ambos: pruebas, GitHub, Trello y defensa.
+## Tecnologías que utilizamos
 
-## Referencias
-Caso DSY1105 «Gestión móvil de inventario, ventas y reposición de productos automotrices» y rúbrica Evaluación Parcial 2 entregados por el estudiante.
+- **Kotlin y Android Studio** para el desarrollo de la aplicación.
+- **Jetpack Compose y Material 3** para la interfaz.
+- **MVVM** para separar las pantallas de la lógica de la aplicación.
+- **Room** para almacenar productos y movimientos de manera local.
+- **CameraX y ML Kit** para la lectura de códigos QR.
+- **Intents de Android** para preparar un correo de reposición desde una aplicación de correo instalada.
+
+## Avance del proyecto
+
+En esta versión incorporamos código para el acceso de demostración, la consulta y administración de productos, los movimientos de inventario, las alertas de reposición y el lector QR. También añadimos validaciones para los formularios y controles destinados a evitar cantidades negativas o códigos de producto duplicados.
+
+**Estado actual:** el código todavía requiere sincronización, compilación y pruebas en Android Studio y en un dispositivo o emulador. En particular, debemos comprobar los permisos de cámara, la lectura del QR y el guardado de productos antes de dar estas funciones por terminadas.
+
+Para esta etapa, los proveedores y las ubicaciones se representan dentro de los datos de cada producto. Más adelante podremos ampliar esos módulos según las instrucciones de la Evaluación Final Transversal.
+
+## Datos de prueba
+
+Usamos un usuario y PIN ficticios, además de productos y proveedores de ejemplo. La app no está pensada para manejar datos personales ni operar en un taller real en su estado actual.
+
+## Próximos avances
+
+Queremos seguir mejorando la experiencia de uso, probar los distintos recorridos de la aplicación y completar las funcionalidades que se soliciten en las siguientes evaluaciones. Mantenemos el proyecto como una base que podremos ampliar sin empezar desde cero.

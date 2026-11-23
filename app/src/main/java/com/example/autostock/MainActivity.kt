@@ -7,6 +7,10 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import android.Manifest
+import android.content.pm.PackageManager
+import androidx.core.content.ContextCompat
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.animateFloatAsState
@@ -35,8 +39,9 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.autostock.data.Producto
 import com.example.autostock.viewmodel.InventarioViewModel
 import com.example.autostock.viewmodel.ValidadorProducto
-import com.journeyapps.barcodescanner.ScanContract
-import com.journeyapps.barcodescanner.ScanOptions
+import com.example.autostock.qr.QrScannerScreen
+import com.example.autostock.qr.QrProductParser
+import com.example.autostock.qr.QrProductData
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -75,12 +80,27 @@ fun AutoStockApp(vm: InventarioViewModel = viewModel()) {
     val snackbar = remember { SnackbarHostState() }
     val context = LocalContext.current
 
-    val escaner = rememberLauncherForActivityResult(ScanContract()) { resultado ->
-        val codigo = resultado.contents
-        if (!codigo.isNullOrBlank()) {
-            codigoEscaneado = codigo
-            buscando = codigo
-            ruta = "Productos"
+    var qrData by remember { mutableStateOf<QrProductData?>(null) }
+    var qrError by remember { mutableStateOf<String?>(null) }
+    var qrCameraGranted by remember { mutableStateOf(
+        ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED
+    ) }
+    val cameraPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        qrCameraGranted = granted
+    }
+    fun procesarQr(valor: String) {
+        when (val resultado = QrProductParser.parse(valor)) {
+            is QrProductParser.Result.Success -> {
+                val existe = productos.any { it.codigo.equals(resultado.producto.codigo, ignoreCase = true) }
+                if (existe) {
+                    qrError = "El código ${resultado.producto.codigo} ya existe. Puedes buscarlo en Productos."
+                } else {
+                    qrData = resultado.producto
+                    seleccionado = null
+                    ruta = "Formulario"
+                }
+            }
+            is QrProductParser.Result.Error -> qrError = resultado.message
         }
     }
 
@@ -115,7 +135,7 @@ fun AutoStockApp(vm: InventarioViewModel = viewModel()) {
             TopAppBar(title = { Text(if (ruta == "Inicio") "AutoStock" else ruta, fontWeight = FontWeight.Bold) },
                 navigationIcon = { if (ruta != "Inicio") IconButton(onClick = { ruta = "Inicio"; seleccionado = null }) { Icon(Icons.Default.ArrowBack, "Volver") } },
                 actions = {
-                    if (ruta == "Productos") IconButton(onClick = { escaner.launch(ScanOptions().setPrompt("Escanea el código del producto").setBeepEnabled(false).setOrientationLocked(false)) }) { Icon(Icons.Default.QrCodeScanner, "Escanear QR") }
+                    if (ruta == "Productos") IconButton(onClick = { qrError = null; ruta = "Escanear QR" }) { Icon(Icons.Default.QrCodeScanner, "Agregar producto por QR") }
                     if (ruta == "Inicio") IconButton(onClick = { inicioSesion = false; clave = "" }) { Icon(Icons.Default.Logout, "Cerrar sesión") }
                 })
         },
@@ -134,7 +154,15 @@ fun AutoStockApp(vm: InventarioViewModel = viewModel()) {
             when (ruta) {
                 "Inicio" -> InicioScreen(productos, movimientos.size, ir = { ruta = it })
                 "Productos" -> ProductosScreen(productos, buscando, { buscando = it }, onEdit = { seleccionado = it; ruta = "Formulario" }, onDelete = { confirmEliminar = it }, onMovimiento = { seleccionado = it; ruta = "Registrar movimiento" }, codigoEscaneado = codigoEscaneado)
-                "Formulario" -> FormularioScreen(seleccionado, onGuardar = { vm.guardar(it) { ruta = "Productos"; seleccionado = null } }, onCancelar = { ruta = "Productos" })
+                "Formulario" -> FormularioScreen(seleccionado, qrData, onGuardar = { vm.guardar(it) { ruta = "Productos"; seleccionado = null; qrData = null } }, onCancelar = { ruta = "Productos"; qrData = null })
+                "Escanear QR" -> QrScannerScreen(
+                    hasCameraPermission = qrCameraGranted,
+                    onRequestPermission = { cameraPermission.launch(Manifest.permission.CAMERA) },
+                    onResult = { procesarQr(it) },
+                    error = qrError,
+                    onRetry = { qrError = null },
+                    onCancel = { ruta = "Productos" }
+                )
                 "Movimientos" -> MovimientosScreen(movimientos, productos, onAgregar = { seleccionado = it; ruta = "Registrar movimiento" })
                 "Registrar movimiento" -> MovimientoFormScreen(seleccionado, onGuardar = { tipo, cantidad, motivo -> vm.registrar(seleccionado!!.id,tipo,cantidad,motivo) { ruta = "Movimientos" } }, onCancelar = { ruta = "Movimientos" })
                 "Reposición" -> ReposicionScreen(productos) { proveedor, body ->
@@ -231,21 +259,22 @@ private fun ProductosScreen(productos: List<Producto>, busqueda: String, cambiar
 }
 
 @Composable
-private fun FormularioScreen(original: Producto?, onGuardar: (Producto) -> Unit, onCancelar: () -> Unit) {
-    var codigo by remember(original?.id) { mutableStateOf(original?.codigo ?: "") }
-    var nombre by remember(original?.id) { mutableStateOf(original?.nombre ?: "") }
-    var descripcion by remember(original?.id) { mutableStateOf(original?.descripcion ?: "") }
-    var categoria by remember(original?.id) { mutableStateOf(original?.categoria ?: "Repuestos") }
-    var marca by remember(original?.id) { mutableStateOf(original?.marca ?: "") }
-    var stock by remember(original?.id) { mutableStateOf(original?.stock?.toString() ?: "0") }
-    var minimo by remember(original?.id) { mutableStateOf(original?.minimo?.toString() ?: "2") }
-    var objetivo by remember(original?.id) { mutableStateOf(original?.objetivo?.toString() ?: "10") }
-    var precio by remember(original?.id) { mutableStateOf(original?.precio?.toString() ?: "0") }
-    var proveedor by remember(original?.id) { mutableStateOf(original?.proveedor ?: "Proveedor Demo") }
-    var ubicacion by remember(original?.id) { mutableStateOf(original?.ubicacion ?: "Bodega A - Estante 1") }
+private fun FormularioScreen(original: Producto?, qr: QrProductData? = null, onGuardar: (Producto) -> Unit, onCancelar: () -> Unit) {
+    var codigo by remember(original?.id, qr) { mutableStateOf(original?.codigo ?: qr?.codigo ?: "") }
+    var nombre by remember(original?.id, qr) { mutableStateOf(original?.nombre ?: qr?.nombre ?: "") }
+    var descripcion by remember(original?.id, qr) { mutableStateOf(original?.descripcion ?: qr?.descripcion ?: "") }
+    var categoria by remember(original?.id, qr) { mutableStateOf(original?.categoria ?: qr?.categoria ?: "Repuestos") }
+    var marca by remember(original?.id, qr) { mutableStateOf(original?.marca ?: qr?.marca ?: "") }
+    var stock by remember(original?.id, qr) { mutableStateOf(original?.stock?.toString() ?: qr?.stock?.toString() ?: "0") }
+    var minimo by remember(original?.id, qr) { mutableStateOf(original?.minimo?.toString() ?: qr?.minimo?.toString() ?: "2") }
+    var objetivo by remember(original?.id, qr) { mutableStateOf(original?.objetivo?.toString() ?: qr?.objetivo?.toString() ?: "10") }
+    var precio by remember(original?.id, qr) { mutableStateOf(original?.precio?.toString() ?: qr?.precio?.toString() ?: "0") }
+    var proveedor by remember(original?.id, qr) { mutableStateOf(original?.proveedor ?: qr?.proveedor ?: "Proveedor Demo") }
+    var ubicacion by remember(original?.id, qr) { mutableStateOf(original?.ubicacion ?: qr?.ubicacion ?: "Bodega A - Estante 1") }
     var errores by remember { mutableStateOf<Map<String,String>>(emptyMap()) }
     LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(18.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
         item { Text(if (original == null) "Nuevo producto" else "Editar producto", style=MaterialTheme.typography.headlineSmall, fontWeight=FontWeight.Bold) }
+        if (qr != null) item { Text("Datos obtenidos del QR. Revísalos antes de guardar.", color = MaterialTheme.colorScheme.primary) }
         item { Campo("Código *", codigo, {codigo=it}, errores["codigo"]) }
         item { Campo("Nombre *", nombre, {nombre=it}, errores["nombre"]) }
         item { Campo("Descripción", descripcion, {descripcion=it}) }
